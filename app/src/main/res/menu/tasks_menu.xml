@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/myTasks"
+        android:icon="@drawable/baseline_checklist_24"
+        android:title="@string/myTasks" />
+
+    <item
+        android:id="@+id/incomingTasks"
+        android:icon="@drawable/baseline_checklist_24"
+        android:title="Присланные" />
+
+    <item
+        android:id="@+id/sentTasks"
+        android:icon="@drawable/baseline_checklist_24"
+        android:title="Отправленные" />
+</menu>

@@ -69,7 +69,7 @@ public class TasksAdapter extends RecyclerView.Adapter<TaskViewHolder> {
 
         holder.accept.setOnClickListener(v -> setTaskStatus(holder, 4, position));
         holder.reject.setOnClickListener(v -> setTaskStatus(holder, 3, position));
-        holder.itemView.findViewById(R.id.editImage).setOnClickListener(v -> intentToAddNewTask(holder, position));
+        holder.editImage.setOnClickListener(v -> intentToAddNewTask(holder, position));
         holder.itemView.setOnClickListener(v -> intentToTaskInfo(holder, position));
         holder.acceptTheTask.setOnClickListener(v -> setTaskStatus(holder, 1, position));
         holder.rejectATask.setOnClickListener(v -> {
@@ -158,7 +158,7 @@ public class TasksAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         holder.todoCheckbox.setEnabled(newTaskStatus != -1 && newTaskStatus != 0 && newTaskStatus != 2);
         holder.todoCheckbox.setChecked(newTaskStatus==4);
 
-        if (newTaskStatus==0) {
+        if (newTaskStatus==0 && !Objects.equals(getItem(position).getUserFromId(), getItem(position).getUserToId())) {
             holder.acceptRejectLinearLayout.setVisibility(View.VISIBLE);
             holder.taskCheckConstraintLayout.setVisibility(View.GONE);
         } else if (newTaskStatus == 2 && Objects.equals(FirebaseAuth.getInstance().getUid(), getItem(position).getUserFromId())) {
@@ -185,6 +185,11 @@ public class TasksAdapter extends RecyclerView.Adapter<TaskViewHolder> {
     private void intentToAddNewTask(TaskViewHolder holder, int position) {
         Intent intent = new Intent(holder.itemView.getContext(), AddNewTask.class);
         intent.putExtra("isUpdate", true);
+        if (Objects.equals(getItem(position).getUserFromId(), getItem(position).getUserToId())) {
+            intent.putExtra("fromFragment", "myTasksFragment");
+        } else {
+            intent.putExtra("fromFragment", "sentTasksFragment");
+        }
         intent.putExtra("taskId", tasks.get(position).getTaskId());
         intent.putExtra("taskStatus", tasks.get(position).getTaskStatus());
         holder.itemView.getContext().startActivity(intent);
@@ -207,6 +212,7 @@ public class TasksAdapter extends RecyclerView.Adapter<TaskViewHolder> {
         intent.putExtra("taskId", getItem(position).getTaskId());
         intent.putExtra("taskText", getItem(position).getTaskText());
         intent.putExtra("userFrom", getItem(position).getUserFrom());
+        intent.putExtra("userTo", getItem(position).getUserTo());
         intent.putExtra("degreeOfImportance", getItem(position).getDegreeOfImportance());
         intent.putExtra("termDateTime", getItem(position).getTermDateTime());
         intent.putExtra("taskCheck", getItem(position).getIsTaskCheck());

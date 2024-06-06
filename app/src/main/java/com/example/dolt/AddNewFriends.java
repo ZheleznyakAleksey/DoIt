@@ -35,7 +35,6 @@ public class AddNewFriends extends AppCompatActivity {
                @Override
                public void onClick(View v) {
                    Intent intent = new Intent(AddNewFriends.this, MainActivity.class);
-                   intent.putExtra("id", R.id.friends);
                    intent.putExtra("fragment", "friendsFragment");
                    startActivity(intent);
                }

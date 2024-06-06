@@ -15,6 +15,34 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
 
+        <LinearLayout
+            android:id="@+id/infoToUserLinearLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            tool:layout_constraintStart_toStartOf="@+id/infoTaskTextLinearLayout"
+            tool:layout_constraintTop_toBottomOf="@+id/infoFromUserLinearLayout">
+
+            <TextView
+                android:id="@+id/to"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Кому:"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/infoToUser"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Пользователь"
+                android:textColor="@color/black"
+                android:textSize="16sp" />
+        </LinearLayout>
+
         <TextView
             android:id="@+id/textTaskInfo"
             android:layout_width="wrap_content"
@@ -60,11 +88,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            tool:layout_constraintStart_toStartOf="@+id/infoTaskText"
+            tool:layout_constraintStart_toStartOf="@+id/infoTaskTextLinearLayout"
             tool:layout_constraintTop_toBottomOf="@+id/infoTaskTextLinearLayout">
 
             <TextView
-                android:id="@+id/toOrFrom"
+                android:id="@+id/from"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="От:"
@@ -168,9 +196,10 @@
             android:id="@+id/infoDegreeLinearLayout"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal"
             tool:layout_constraintStart_toStartOf="@+id/infoFromUserLinearLayout"
-            tool:layout_constraintTop_toBottomOf="@+id/infoFromUserLinearLayout">
+            tool:layout_constraintTop_toBottomOf="@+id/infoToUserLinearLayout">
 
             <TextView
                 android:id="@+id/textView"
@@ -202,7 +231,7 @@
 
             <TextView
                 android:id="@+id/textView7"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Ответ:"
@@ -229,6 +258,34 @@
             tool:layout_constraintStart_toStartOf="parent"
             tool:layout_constraintTop_toBottomOf="@+id/infoTextCheckingLayout"
             tools:ignore="ContentDescription" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            tool:layout_constraintEnd_toEndOf="parent"
+            tool:layout_constraintStart_toStartOf="parent"
+            tool:layout_constraintTop_toBottomOf="@+id/infoTextCheckingLayout">
+
+            <Button
+                android:id="@+id/editOrRejectBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="@color/design_default_color_primary_variant"
+                android:text="Редактировать" />
+
+            <Button
+                android:id="@+id/backButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/colorPrimary"
+                android:text="Назад" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

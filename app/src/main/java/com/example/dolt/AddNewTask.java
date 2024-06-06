@@ -6,13 +6,13 @@ import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.DatePicker;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -49,15 +49,18 @@ public class AddNewTask extends AppCompatActivity {
         setInitialDateTime(true);
 
         boolean isUpdate = false;
+        String fromFragment = "myTasksFragment";
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             isUpdate = extras.getBoolean("isUpdate");
+            fromFragment = extras.getString("fromFragment");
         }
+        String finalFromFragment = fromFragment;
 
         final String[] friendsStr = new String[1];
         DatabaseReference dr = FirebaseDatabase.getInstance().getReference().child("Users");
 
-        fullSpinner(dr, friendsStr, isUpdate);
+        fullSpinner(dr, friendsStr);
 
         if(isUpdate) {
             binding.toUser.setVisibility(View.GONE);
@@ -67,7 +70,7 @@ public class AddNewTask extends AppCompatActivity {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                                     binding.newTaskText.setText(Objects.requireNonNull(snapshot.child("taskText").getValue()).toString());
-                                    binding.termDateTime.setText(snapshot.child("termDateTime").getValue().toString());
+                                    binding.termDateTime.setText(Objects.requireNonNull(snapshot.child("termDateTime").getValue()).toString());
                                     binding.degreeOfImportance.setSelection(Integer.parseInt(Objects.requireNonNull(snapshot.child("degreeOfImportance").getValue()).toString()));
                                     binding.changeTaskCheck.setSelection(Integer.parseInt(Objects.requireNonNull(snapshot.child("isTaskCheck").getValue()).toString()));
                                 }
@@ -81,8 +84,38 @@ public class AddNewTask extends AppCompatActivity {
             binding.deleteTaskButton.setVisibility(View.GONE);
         }
 
-        boolean finalIsUpdate = isUpdate;
+        binding.userTo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                FirebaseDatabase.getInstance().getReference().child("Users").child(Objects.requireNonNull(FirebaseAuth.getInstance().getUid())).child("username")
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                if (binding.userTo.getItemAtPosition(position).toString().equals(Objects.requireNonNull(snapshot.getValue()) + " (Я)")) {
+                                    binding.isTaskCheckLinearLayout.setBackgroundColor(Color.GRAY);
+                                    binding.changeTaskCheck.setEnabled(false);
+                                    binding.changeTaskCheck.setSelection(0);
+                                } else {
+                                    binding.isTaskCheckLinearLayout.setBackgroundColor(Color.WHITE);
+                                    binding.changeTaskCheck.setEnabled(true);
+                                }
 
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+
+                            }
+                        });
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        boolean finalIsUpdate = isUpdate;
         binding.newTaskButton.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("NewApi")
             @Override
@@ -126,7 +159,7 @@ public class AddNewTask extends AppCompatActivity {
                     taskInfo.put("termDateTime", binding.termDateTime.getText());
                     taskInfo.put("isTaskCheck", binding.changeTaskCheck.getSelectedItemId());
                     if (!finalIsUpdate) {
-                        if (taskInfo.get("userToId")==taskInfo.get("userFromId")) {
+                        if (taskInfo.get("userToId").toString().equals(taskInfo.get("userFromId").toString())) {
                             taskInfo.put("taskStatus", 1);
                         }
                         else {
@@ -135,43 +168,49 @@ public class AddNewTask extends AppCompatActivity {
                     }
 
                     FirebaseDatabase.getInstance().getReference().child("Tasks").child(taskId).updateChildren(taskInfo);
+                    FirebaseDatabase.getInstance().getReference().child("Users")
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    final Intent intent = new Intent(AddNewTask.this, MainActivity.class);
+                                    intent.putExtra("fragment", "tasksFragment");
+                                    intent.putExtra("fragmentTasks", finalFromFragment);
+                                    startActivity(intent);
+                                }
 
-                    final Intent i = new Intent(AddNewTask.this, MainActivity.class);
-                    startActivity(i);
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+
+                                }
+                            });
                 } else
                     Toast.makeText(getApplicationContext(), "Задача не может быть пустой!", Toast.LENGTH_SHORT).show();
             }
         });
 
-        binding.deleteTaskButton.setOnClickListener(new View.OnClickListener() {
+        binding.deleteTaskButton.setOnClickListener(v -> FirebaseDatabase.getInstance().getReference().addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onClick(View v) {
-                FirebaseDatabase.getInstance().getReference().addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String taskId = extras.getString("taskId");
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String taskId = extras.getString("taskId");
 
-                        snapshot.child("Tasks").child("tasks").child(taskId).getRef().setValue(null);
-                        snapshot.child("Tasks").child(taskId).getRef().removeValue();
+                snapshot.child("Tasks").child("tasks").child(taskId).getRef().setValue(null);
+                snapshot.child("Tasks").child(taskId).getRef().removeValue();
 
-                        Intent intent = new Intent(AddNewTask.this, MainActivity.class);
-                        startActivity(intent);
-                    }
+                Intent intent = new Intent(AddNewTask.this, MainActivity.class);
+                intent.putExtra("fragment", "tasksFragment");
+                intent.putExtra("fragmentTasks", finalFromFragment);
+                startActivity(intent);
+            }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
 
             }
-        });
+        }));
 
     }
 
-    public void fullSpinner(DatabaseReference dr, String[] friendsStr, boolean isUpdate){
-
-        final String[] userToIds = new String[1];
+    public void fullSpinner(DatabaseReference dr, String[] friendsStr){
 
         dr.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -192,7 +231,7 @@ public class AddNewTask extends AppCompatActivity {
                     String username = Objects.requireNonNull(snapshot.child(str).child("username").getValue()).toString();
                     allFriendsList[0][i] = username;
                     allFriendsList[1][i] = str;
-                    if (str.equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
+                    if (str.equals(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid())) {
                         selPos = i;
                         allFriendsList[0][i] += " (Я)";
                     }
@@ -243,22 +282,18 @@ public class AddNewTask extends AppCompatActivity {
     }
 
     // установка обработчика выбора времени
-    TimePickerDialog.OnTimeSetListener t=new TimePickerDialog.OnTimeSetListener() {
-        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-            dateAndTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            dateAndTime.set(Calendar.MINUTE, minute);
-            setInitialDateTime(false);
-        }
+    TimePickerDialog.OnTimeSetListener t= (view, hourOfDay, minute) -> {
+        dateAndTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+        dateAndTime.set(Calendar.MINUTE, minute);
+        setInitialDateTime(false);
     };
 
     // установка обработчика выбора даты
-    DatePickerDialog.OnDateSetListener d=new DatePickerDialog.OnDateSetListener() {
-        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-            dateAndTime.set(Calendar.YEAR, year);
-            dateAndTime.set(Calendar.MONTH, monthOfYear);
-            dateAndTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            setInitialDateTime(false);
-        }
+    DatePickerDialog.OnDateSetListener d= (view, year, monthOfYear, dayOfMonth) -> {
+        dateAndTime.set(Calendar.YEAR, year);
+        dateAndTime.set(Calendar.MONTH, monthOfYear);
+        dateAndTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        setInitialDateTime(false);
     };
 
 }

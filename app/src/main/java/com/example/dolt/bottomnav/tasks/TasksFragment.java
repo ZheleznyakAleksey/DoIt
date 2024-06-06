@@ -16,6 +16,8 @@ import com.example.dolt.databinding.FragmentTasksBinding;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class TasksFragment extends Fragment {
     private FragmentTasksBinding binding;
@@ -25,8 +27,33 @@ public class TasksFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentTasksBinding.inflate(inflater, container, false);
 
-        getParentFragmentManager().beginTransaction().replace(binding.fragmentContainer1.getId(), new MyTasksFragment()).commit();
-        binding.tasksNav.setSelectedItemId(R.id.myTasks);
+
+        AtomicReference<String> currentFragment = new AtomicReference<>("myTasksFragment");
+        int startFragmentId = R.id.myTasks;
+        Fragment startFragment = new MyTasksFragment();
+        if (requireActivity().getIntent()!=null) {
+            if (Objects.requireNonNull(requireActivity().getIntent()).getExtras() != null) {
+                if (Objects.requireNonNull(Objects.requireNonNull(requireActivity().getIntent()).getExtras()).getString("fragmentTasks") != null) {
+                    String extras = Objects.requireNonNull(Objects.requireNonNull(requireActivity().getIntent()).getExtras()).getString("fragmentTasks");
+                    if (Objects.equals(extras, "myTasksFragment")) {
+                        startFragment = new MyTasksFragment();
+                        startFragmentId = R.id.myTasks;
+                        currentFragment.set("myTasksFragment");
+                    } else if (Objects.equals(extras, "sentTasksFragment")) {
+                        startFragment = new SentTasksFragment();
+                        startFragmentId = R.id.sentTasks;
+                        currentFragment.set("sentTasksFragment");
+                    } else if (Objects.equals(extras, "incomingTasksFragment")) {
+                        startFragment = new IncomingTasksFragment();
+                        startFragmentId = R.id.incomingTasks;
+                        currentFragment.set("incomingTasksFragment");
+                    }
+                }
+            }
+        }
+
+        getParentFragmentManager().beginTransaction().replace(binding.fragmentContainer1.getId(), startFragment).commit();
+        binding.tasksNav.setSelectedItemId(startFragmentId);
 
         Map<Integer, Fragment> fragmentMap = new HashMap<>();
         fragmentMap.put(R.id.myTasks, new MyTasksFragment());
@@ -36,6 +63,14 @@ public class TasksFragment extends Fragment {
 
         binding.tasksNav.setOnItemSelectedListener(item -> {
             Fragment fragment = fragmentMap.get(item.getItemId());
+
+            if (Objects.equals(item.getItemId(), R.id.myTasks)) {
+                currentFragment.set("myTasksFragment");
+            } else if (Objects.equals(item.getItemId(), R.id.sentTasks)) {
+                currentFragment.set("sentTasksFragment");
+            } else if (Objects.equals(item.getItemId(), R.id.incomingTasks)) {
+                currentFragment.set("incomingTasksFragment");
+            }
 
             assert fragment != null;
             getParentFragmentManager().beginTransaction().replace(binding.fragmentContainer1.getId(), fragment).commit();
@@ -49,7 +84,7 @@ public class TasksFragment extends Fragment {
             public void onClick(View v) {
                 final Intent i = new Intent(TasksFragment.this.getContext(), AddNewTask.class);
                 i.putExtra("isUpdate", false);
-
+                i.putExtra("fromFragment", currentFragment.toString());
                 startActivity(i);
             }
         });

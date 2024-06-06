@@ -15,13 +15,25 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
 
+        <TextView
+            android:id="@+id/textTaskInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Информация по задаче"
+            android:textColor="@color/black"
+            android:textSize="24sp"
+            tool:layout_constraintEnd_toEndOf="parent"
+            tool:layout_constraintStart_toStartOf="parent"
+            tool:layout_constraintTop_toTopOf="parent" />
+
         <LinearLayout
             android:id="@+id/infoTaskTextLinearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            tools:layout_editor_absoluteX="16dp"
-            tools:layout_editor_absoluteY="8dp">
+            tool:layout_constraintTop_toBottomOf="@+id/textTaskInfo"
+            tools:layout_editor_absoluteX="16dp">
 
             <TextView
                 android:id="@+id/textView6"
@@ -156,7 +168,6 @@
             android:id="@+id/infoDegreeLinearLayout"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
             android:orientation="horizontal"
             tool:layout_constraintStart_toStartOf="@+id/infoFromUserLinearLayout"
             tool:layout_constraintTop_toBottomOf="@+id/infoFromUserLinearLayout">
@@ -203,7 +214,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:hint="Текст для проверки задачи"
+                android:hint="Текст для проверки задачи  "
                 android:textColor="@color/black"
                 android:textColorHighlight="#454749"
                 android:textSize="20sp" />

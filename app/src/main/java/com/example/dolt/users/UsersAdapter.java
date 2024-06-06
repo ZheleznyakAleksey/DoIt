@@ -39,6 +39,15 @@ public class UsersAdapter extends RecyclerView.Adapter<UserViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, @SuppressLint("RecyclerView") int position) {
         holder.username.setText(users.get(position).getUsername());
+        if (getItem(position).getFriendRequest()) {
+            holder.acceptRejectFriendRequest.setVisibility(View.VISIBLE);
+            holder.addNewFriend.setVisibility(View.GONE);
+            holder.deleteFriend.setVisibility(View.GONE);
+        } else {
+            holder.acceptRejectFriendRequest.setVisibility(View.GONE);
+            holder.addNewFriend.setVisibility(View.VISIBLE);
+            holder.deleteFriend.setVisibility(View.VISIBLE);
+        }
         if (users.get(position).getFriend()) {
             holder.addNewFriend.setVisibility(View.GONE);
             holder.deleteFriend.setColorFilter(Color.BLACK);
@@ -70,13 +79,13 @@ public class UsersAdapter extends RecyclerView.Adapter<UserViewHolder> {
                     }
                 });
 
-        holder.itemView.findViewById(R.id.addNewFriend).setOnClickListener(v -> {
-            FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("friends").child(users.get(position).getUserId()).setValue("");
-            FirebaseDatabase.getInstance().getReference().child("Users").child(users.get(position).getUserId()).child("friends").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).setValue("");
+        holder.addNewFriend.setOnClickListener(v -> {
+            FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("outFriendRequests").child(users.get(position).getUserId()).setValue("");
+            FirebaseDatabase.getInstance().getReference().child("Users").child(users.get(position).getUserId()).child("intoFriendRequests").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).setValue("");
             removeItem(holder);
 
         });
-        holder.itemView.findViewById(R.id.deleteFriend).setOnClickListener(v -> {
+        holder.deleteFriend.setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(holder.itemView.getContext());
             builder.setTitle("Удалить из друзей");
             builder.setMessage("Вы уверены, что хотите удалить пользователя '" + users.get(position).getUsername() + "' из друзей?");
@@ -96,6 +105,25 @@ public class UsersAdapter extends RecyclerView.Adapter<UserViewHolder> {
             });
             AlertDialog dialog = builder.create();
             dialog.show();
+        });
+
+        holder.acceptRequestFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("friends").child(users.get(position).getUserId()).setValue("");
+                FirebaseDatabase.getInstance().getReference().child("Users").child(users.get(position).getUserId()).child("friends").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).setValue("");
+                FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("outFriendRequests").child(users.get(position).getUserId()).removeValue();
+                FirebaseDatabase.getInstance().getReference().child("Users").child(users.get(position).getUserId()).child("intoFriendRequests").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).removeValue();
+                removeItem(holder);
+            }
+        });
+        holder.rejectRequestFriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("outFriendRequests").child(users.get(position).getUserId()).removeValue();
+                FirebaseDatabase.getInstance().getReference().child("Users").child(users.get(position).getUserId()).child("intoFriendRequests").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).removeValue();
+                removeItem(holder);
+            }
         });
 
     }

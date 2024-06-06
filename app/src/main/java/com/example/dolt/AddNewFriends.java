@@ -96,7 +96,7 @@ public class AddNewFriends extends AppCompatActivity {
                     String username = Objects.requireNonNull(userSnapshot.child("username").getValue()).toString();
                     //String profileImage = snapshot.child("profileImage").getValue().toString();
 
-                    User user = new User(username, userId, false);
+                    User user = new User(username, userId, false, false);
                     users.add(user);
                 }
 

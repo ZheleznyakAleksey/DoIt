@@ -2,11 +2,12 @@ package com.example.dolt.users;
 
 public class User{
     private String username, userId, fcmToken;
-    private Boolean isFriend;
-    public User(String username, String userId, Boolean isFriend) {
+    private Boolean isFriend, isFriendRequest;
+    public User(String username, String userId, Boolean isFriend, Boolean isFriendRequest) {
         this.username = username;
         this.userId = userId;
         this.isFriend = isFriend;
+        this.isFriendRequest = isFriendRequest;
     }
 
     public String getUserId() {
@@ -39,5 +40,13 @@ public class User{
 
     public void setFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
+    }
+
+    public void setFriendRequest(Boolean friendRequest) {
+        isFriendRequest = friendRequest;
+    }
+
+    public Boolean getFriendRequest() {
+        return isFriendRequest;
     }
 }

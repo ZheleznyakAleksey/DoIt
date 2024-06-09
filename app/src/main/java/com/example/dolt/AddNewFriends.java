@@ -2,7 +2,6 @@ package com.example.dolt;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,14 +30,11 @@ public class AddNewFriends extends AppCompatActivity {
 
         loadUsers();
 
-        binding.backBtn.setOnClickListener(new View.OnClickListener() {
-               @Override
-               public void onClick(View v) {
-                   Intent intent = new Intent(AddNewFriends.this, MainActivity.class);
-                   intent.putExtra("fragment", "friendsFragment");
-                   startActivity(intent);
-               }
-           }
+        binding.backBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(AddNewFriends.this, MainActivity.class);
+            intent.putExtra("fragment", "friendsFragment");
+            startActivity(intent);
+        }
         );
 
         setContentView(binding.getRoot());
@@ -64,7 +60,7 @@ public class AddNewFriends extends AppCompatActivity {
                     usersIds[i] = str;
                 }
 
-                String friendsStr = Objects.requireNonNull(snapshot.child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("friends").getValue()).toString();
+                String friendsStr = Objects.requireNonNull(snapshot.child("Users").child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).child("friends").getValue()).toString();
                 String[] friendsIds = friendsStr.split(",");
                 for (int i = 0; i < friendsIds.length; i++) {
                     String str = friendsIds[i];
@@ -78,8 +74,8 @@ public class AddNewFriends extends AppCompatActivity {
 
                 ArrayList<Integer> indexes = new ArrayList<>();
                 for (int i = 0; i < usersIds.length; i++) {
-                    for (int j = 0; j < friendsIds.length; j++) {
-                        if(Objects.equals(usersIds[i], friendsIds[j]))
+                    for (String friendsId : friendsIds) {
+                        if (Objects.equals(usersIds[i], friendsId))
                             indexes.add(i);
                     }
                 }
@@ -93,7 +89,6 @@ public class AddNewFriends extends AppCompatActivity {
                 for (String userId : usersIds){
                     DataSnapshot userSnapshot = snapshot.child("Users").child(userId);
                     String username = Objects.requireNonNull(userSnapshot.child("username").getValue()).toString();
-                    //String profileImage = snapshot.child("profileImage").getValue().toString();
 
                     User user = new User(username, userId, false, false);
                     users.add(user);

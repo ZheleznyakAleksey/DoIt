@@ -46,7 +46,7 @@ public class AddNewTask extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         tomorrowDateTime = findViewById(R.id.termDateTime);
-        setInitialDateTime(true);
+        setInitialDateTime();
 
         boolean isUpdate = false;
         String fromFragment = "myTasksFragment";
@@ -267,25 +267,18 @@ public class AddNewTask extends AppCompatActivity {
                 .show();
     }
     // установка начальных даты и времени
-    private void setInitialDateTime(boolean isDefault) {
-        if (isDefault) {
-            tomorrowDateTime.setText(DateUtils.formatDateTime(this,
-                    dateAndTime.getTimeInMillis(),
-                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR
-                            | DateUtils.FORMAT_SHOW_TIME));
-        } else {
-            tomorrowDateTime.setText(DateUtils.formatDateTime(this,
-                    dateAndTime.getTimeInMillis() + DateUtils.DAY_IN_MILLIS,
-                    DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR
-                            | DateUtils.FORMAT_SHOW_TIME));
-        }
+    private void setInitialDateTime() {
+        tomorrowDateTime.setText(DateUtils.formatDateTime(this,
+                dateAndTime.getTimeInMillis(),
+                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR
+                        | DateUtils.FORMAT_SHOW_TIME));
     }
 
     // установка обработчика выбора времени
     TimePickerDialog.OnTimeSetListener t= (view, hourOfDay, minute) -> {
         dateAndTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
         dateAndTime.set(Calendar.MINUTE, minute);
-        setInitialDateTime(false);
+        setInitialDateTime();
     };
 
     // установка обработчика выбора даты
@@ -293,7 +286,7 @@ public class AddNewTask extends AppCompatActivity {
         dateAndTime.set(Calendar.YEAR, year);
         dateAndTime.set(Calendar.MONTH, monthOfYear);
         dateAndTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        setInitialDateTime(false);
+        setInitialDateTime();
     };
 
 }

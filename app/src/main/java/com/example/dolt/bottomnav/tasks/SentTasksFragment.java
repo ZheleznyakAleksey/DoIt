@@ -45,8 +45,10 @@ public class SentTasksFragment extends Fragment {
                 String allTasksStr;
                 if (snapshot.child("Tasks").child("tasks").getValue() != null) {
                     allTasksStr = Objects.requireNonNull(snapshot.child("Tasks").child("tasks").getValue()).toString();
-
-                } else return;
+                } else {
+                    binding.textView8.setVisibility(View.VISIBLE);
+                    return;
+                }
                 String[] allTasksIds = allTasksStr.split(",");
                 ArrayList<String> outgoingTasks = new ArrayList<>();
                 if (allTasksIds[0].length()<4) return;
@@ -86,6 +88,9 @@ public class SentTasksFragment extends Fragment {
                     }
                 }
                 outTasks.sort(Task::compareTo);
+
+                if (!outTasks.isEmpty())
+                    binding.textView8.setVisibility(View.GONE);
 
                 binding.sentTasksRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                 binding.sentTasksRecyclerView.setAdapter(new TasksAdapter(outTasks));

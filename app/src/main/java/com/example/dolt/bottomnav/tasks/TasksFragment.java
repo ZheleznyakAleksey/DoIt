@@ -47,6 +47,10 @@ public class TasksFragment extends Fragment {
                         startFragment = new IncomingTasksFragment();
                         startFragmentId = R.id.incomingTasks;
                         currentFragment.set("incomingTasksFragment");
+                    } else {
+                        startFragment = new MyTasksFragment();
+                        startFragmentId = R.id.myTasks;
+                        currentFragment.set("myTasksFragment");
                     }
                 }
             }

@@ -45,8 +45,10 @@ public class MyTasksFragment extends Fragment {
                 String allTasksStr;
                 if (snapshot.child("Tasks").child("tasks").getValue() != null) {
                     allTasksStr = Objects.requireNonNull(snapshot.child("Tasks").child("tasks").getValue()).toString();
-
-                } else return;
+                } else {
+                    binding.textView8.setVisibility(View.VISIBLE);
+                    return;
+                }
                 String[] allTasksIds = allTasksStr.split(",");
                 ArrayList<String> mytasks = new ArrayList<>();
                 if (allTasksIds[0].length()<4) return;
@@ -88,6 +90,9 @@ public class MyTasksFragment extends Fragment {
                     }
                 }
                 myTasks.sort(Task::compareTo);
+
+                if (!myTasks.isEmpty())
+                    binding.textView8.setVisibility(View.GONE);
 
                 binding.myTasksRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                 binding.myTasksRecyclerView.setAdapter(new TasksAdapter(myTasks));

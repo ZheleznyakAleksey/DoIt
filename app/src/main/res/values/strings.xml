@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Планировщик задач</string>
+    <string name="app_name">Помощник по планированию задач</string>
     <string name="new_task">Новая Задача</string>
     <string name="save">Сохранить</string>
     <string name="Tasks">Задачи</string>

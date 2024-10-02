@@ -1,5 +1,8 @@
 package com.example.dolt;
 
+import static com.example.dolt.DifferentMethods.makeToast;
+import static com.example.dolt.TaskInfo.returnStringDegreeOfImportance;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -16,6 +19,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.dolt.databinding.ActivitySendingForVerificationBinding;
+import com.example.dolt.utils.DatabaseFriends;
+import com.example.dolt.utils.DatabaseTasks;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 
@@ -24,6 +29,8 @@ import java.io.IOException;
 public class SendingForVerification extends AppCompatActivity {
 
     private ActivitySendingForVerificationBinding binding;
+    private DatabaseFriends databaseFriends;
+    private DatabaseTasks databaseTasks;
     private Uri filePath;
     private boolean isSelectedImage = false;
 
@@ -33,29 +40,25 @@ public class SendingForVerification extends AppCompatActivity {
         binding = ActivitySendingForVerificationBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        databaseTasks = new DatabaseTasks(this);
+        databaseTasks.openDatabase();
+        databaseFriends = new DatabaseFriends(this);
+        databaseFriends.openDatabase();
+
         Bundle extras = getIntent().getExtras();
         assert extras != null;
-        String taskId = extras.getString("taskId");
-        String taskText = extras.getString("taskText");
-        String userFrom = extras.getString("userFrom");
-        String degreeOfImportance = String.valueOf(extras.getInt("degreeOfImportance"));
-        String termDateTime = extras.getString("termDateTime");
-        int taskCheck = extras.getInt("taskCheck");
-        String degreeOfImportanceText;
-        if (Integer.parseInt(degreeOfImportance)==0) {
-            degreeOfImportanceText = "Неважно";
-        } else if (Integer.parseInt(degreeOfImportance)==1) {
-            degreeOfImportanceText = "Не очень важно";
-        } else if (Integer.parseInt(degreeOfImportance)==2) {
-            degreeOfImportanceText = "Важно";
-        } else if (Integer.parseInt(degreeOfImportance)==3) {
-            degreeOfImportanceText = "Очень важно";
-        } else {
-            degreeOfImportanceText = "Неизвестная важность задачи";
-        }
+        int id = extras.getInt("id");
+        String taskId = databaseTasks.getTask(id).getTaskId();
+        String userFromId = databaseTasks.getTask(id).getUserFromId();
+        String userFrom;// = databaseFriends.getInfo(new String[]{"USERFROM"}, userFromId).toString();
+        int degreeOfImportance = databaseTasks.getTask(id).getDegreeOfImportance();
+        String taskText = databaseTasks.getTask(id).getTaskText();
+        String termDateTime = databaseTasks.getTask(id).getTaskId();
+        int taskCheck = databaseTasks.getTask(id).getIsTaskCheck();
+
         binding.taskText.setText(taskText);
-        binding.userFromText.setText(userFrom);
-        binding.degreeOfImportance.setText(degreeOfImportanceText);
+        binding.userFromText.setText("userFrom");
+        binding.degreeOfImportance.setText(returnStringDegreeOfImportance(degreeOfImportance));
         binding.termDateTime.setText(termDateTime);
 
         if (taskCheck==1) {
@@ -80,7 +83,7 @@ public class SendingForVerification extends AppCompatActivity {
         binding.sendingForVerificationButton.setOnClickListener(v -> {
             if (taskCheck==1) {
                 if (binding.textForChecking.getText().length()==0) {
-                    MainActivity.makeToast(getApplicationContext(), "Пожалуйста, опишите выполнение задания");
+                    makeToast(getApplicationContext(), "Пожалуйста, опишите выполнение задания");
                 } else {
                     FirebaseDatabase.getInstance().getReference().child("Tasks").child(taskId).child("taskStatus").setValue(2);
                     FirebaseDatabase.getInstance().getReference().child("Tasks").child(taskId).child("textForChecking").setValue(binding.textForChecking.getText().toString());
@@ -94,11 +97,11 @@ public class SendingForVerification extends AppCompatActivity {
                     Intent intent = new Intent(SendingForVerification.this, MainActivity.class);
                     startActivity(intent);
                 } else {
-                    MainActivity.makeToast(getApplicationContext(), "Пожалуйста, выберете изображение");
+                    makeToast(getApplicationContext(), "Пожалуйста, выберете изображение");
                 }
             } else if (taskCheck==3) {
                 if (binding.textForChecking.getText().length()==0) {
-                    MainActivity.makeToast(getApplicationContext(), "Пожалуйста, опишите выполнение задания");
+                    makeToast(getApplicationContext(), "Пожалуйста, опишите выполнение задания");
                 } else if (isSelectedImage) {
                     uploadImage(taskId);
                     FirebaseDatabase.getInstance().getReference().child("Tasks").child(taskId).child("taskStatus").setValue(2);
@@ -106,7 +109,7 @@ public class SendingForVerification extends AppCompatActivity {
                     Intent intent = new Intent(SendingForVerification.this, MainActivity.class);
                     startActivity(intent);
                 } else {
-                    MainActivity.makeToast(getApplicationContext(), "Пожалуйста, выберете изображение");
+                    makeToast(getApplicationContext(), "Пожалуйста, выберете изображение");
                 }
             }
         });

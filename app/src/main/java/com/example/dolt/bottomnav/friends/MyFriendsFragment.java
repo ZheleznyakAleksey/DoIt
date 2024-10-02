@@ -1,5 +1,7 @@
 package com.example.dolt.bottomnav.friends;
 
+import static com.example.dolt.DifferentMethods.makeToast;
+
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,64 +15,40 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.dolt.databinding.FragmentMyFriendsBinding;
 import com.example.dolt.users.User;
 import com.example.dolt.users.UsersAdapter;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.example.dolt.utils.DatabaseFriends;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class MyFriendsFragment extends Fragment {
 
     private FragmentMyFriendsBinding binding;
+    DatabaseFriends databaseFriends;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentMyFriendsBinding.inflate(inflater, container, false);
+        databaseFriends = new DatabaseFriends(MyFriendsFragment.this.getContext());
 
         loadFriends();
+
+        binding.updateFriendsButton.setOnClickListener(v -> {
+            databaseFriends.openDatabase();
+            databaseFriends.deleteAllFriends();
+            databaseFriends.insertAllFriends(this.getContext());
+            databaseFriends.close();
+            makeToast(MyFriendsFragment.this.getContext(), "Друзья обновлены");
+        });
 
         return binding.getRoot();
     }
 
     public void loadFriends(){
-        ArrayList<User> users = new ArrayList<>();
-
-        FirebaseDatabase.getInstance().getReference().child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String friendsStr = Objects.requireNonNull(snapshot.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("friends").getValue()).toString();
-                String[] friendsIds = friendsStr.split(",");
-                for (int i = 0; i < friendsIds.length; i++) {
-                    String str = friendsIds[i];
-                    str = str.substring(1, friendsIds[i].length()-1);
-                    if(i==0)
-                        str = str.substring(0, friendsIds[i].length()-2);
-                    if (i==friendsIds.length-1)
-                        str = str.substring(0, friendsIds[i].length()-3);
-                    friendsIds[i] = str;
-                }
-
-                for (String friendId : friendsIds){
-                    DataSnapshot userSnapshot = snapshot.child(friendId);
-                    String username = Objects.requireNonNull(userSnapshot.child("username").getValue()).toString();
-
-                    User user = new User(username, friendId, true, false);
-                    users.add(user);
-
-                }
-
-                binding.friendsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-                binding.friendsRecyclerView.setAdapter(new UsersAdapter(users));
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+        databaseFriends = new DatabaseFriends(MyFriendsFragment.this.getContext());
+        databaseFriends.openDatabase();
+        ArrayList<User> myFriends = databaseFriends.getAllFriends();
+        databaseFriends.close();
+        binding.friendsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.friendsRecyclerView.setAdapter(new UsersAdapter(myFriends));
     }
 }

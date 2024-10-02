@@ -1,10 +1,9 @@
 package com.example.dolt;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
@@ -12,6 +11,8 @@ import com.example.dolt.bottomnav.friends.FriendsFragment;
 import com.example.dolt.bottomnav.profile.ProfileFragment;
 import com.example.dolt.bottomnav.tasks.TasksFragment;
 import com.example.dolt.databinding.ActivityMainBinding;
+import com.example.dolt.utils.DatabaseFriends;
+import com.example.dolt.utils.DatabaseTasks;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
@@ -24,6 +25,11 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity{
     private ActivityMainBinding binding;
 
+    int startFragmentId;
+    Fragment startFragment;
+    private DatabaseFriends databaseFriends;
+    private DatabaseTasks databaseTasks;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,14 +37,31 @@ public class MainActivity extends AppCompatActivity{
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        databaseTasks = new DatabaseTasks(this);
+        databaseTasks.openDatabase();
+        databaseFriends = new DatabaseFriends(this);
+        databaseFriends.openDatabase();
+
         Bundle extras = getIntent().getExtras();
 
-        if (FirebaseAuth.getInstance().getCurrentUser()==null){
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             startActivity(new Intent(MainActivity.this, LoginActivity.class));
         }
 
-        int startFragmentId = R.id.tasks;
-        Fragment startFragment = new TasksFragment();
+        if (savedInstanceState == null) {
+            startFragmentId = R.id.tasks;
+            startFragment = new TasksFragment();
+        } else {
+            startFragmentId = savedInstanceState.getInt("startFragmentId");
+            if (startFragmentId==R.id.tasks) {
+                startFragment = new TasksFragment();
+            } else if (startFragmentId==R.id.friends) {
+                startFragment = new FriendsFragment();
+            } else if (startFragmentId==R.id.profile) {
+                startFragment = new ProfileFragment();
+            }
+        }
+
         if (extras != null) {
             if (Objects.equals(extras.getString("fragment"), "friendsFragment")) {
                 startFragment = new FriendsFragment();
@@ -71,7 +94,7 @@ public class MainActivity extends AppCompatActivity{
         });
 
         getFCMToken();
-        }
+    }
 
         void getFCMToken() {
             FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
@@ -84,7 +107,10 @@ public class MainActivity extends AppCompatActivity{
             });
         }
 
-        public static void makeToast(Context context, String text) {
-            Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
-        }
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("startFragmentId", startFragmentId);
+    }
+
 }

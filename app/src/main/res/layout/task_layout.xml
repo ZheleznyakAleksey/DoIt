@@ -82,12 +82,11 @@
             android:id="@+id/acceptRejectLinearLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="8dp"
             android:orientation="horizontal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/termDateTime">
+            app:layout_constraintTop_toBottomOf="@+id/editImage">
 
             <Button
                 android:id="@+id/acceptTheTask"
@@ -141,7 +140,7 @@
             android:id="@+id/todoCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:buttonTint="@color/white"
             android:buttonTintMode="multiply"
             android:checked="true"
@@ -150,7 +149,6 @@
             android:saveEnabled="false"
             android:text=" "
             app:layout_constraintBottom_toBottomOf="@+id/taskText"
-            app:layout_constraintEnd_toStartOf="@+id/taskText"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/taskText"
             tool:ignore="MissingConstraints,RtlSymmetry" />
@@ -179,27 +177,27 @@
             android:id="@+id/editImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginBottom="-16dp"
             android:background="@android:color/transparent"
             android:src="@drawable/baseline_edit"
             app:backgroundTint="@color/white"
             app:fabCustomSize="28dp"
             app:fabSize="auto"
-            app:layout_constraintBottom_toTopOf="@+id/termDateTime"
+            app:layout_constraintBottom_toBottomOf="@+id/termDateTime"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             tool:ignore="ContentDescription" />
 
         <TextView
             android:id="@+id/taskText"
-            android:layout_width="260dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="32dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
             android:text="taskText"
             android:textColor="@color/black"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/editImage"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/todoCheckBox"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView

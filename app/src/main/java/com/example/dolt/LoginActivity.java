@@ -7,11 +7,15 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.dolt.databinding.ActivityLoginBinding;
+import com.example.dolt.utils.DatabaseFriends;
+import com.example.dolt.utils.DatabaseTasks;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
 
     private ActivityLoginBinding binding;
+    private final DatabaseFriends databaseFriends = new DatabaseFriends(this);
+    private final DatabaseTasks databaseTasks = new DatabaseTasks(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +30,15 @@ public class LoginActivity extends AppCompatActivity {
                 FirebaseAuth.getInstance().signInWithEmailAndPassword(binding.emailEt.getText().toString(), binding.passwordEt.getText().toString())
                         .addOnCompleteListener(task -> {
                             if (task.isSuccessful()){
+                                databaseTasks.openDatabase();
+                                databaseFriends.openDatabase();
+                                databaseTasks.deleteAllTasks();
+                                databaseTasks.insertAllTasks(this);
+                                databaseFriends.deleteAllFriends();
+                                databaseFriends.insertAllFriends(this);
+                                databaseTasks.close();
+                                databaseFriends.close();
+
                                 Intent intent = new Intent(LoginActivity.this, SplashActivity.class);
                                 if (getIntent().getExtras()!=null) {
                                     intent.putExtra("fragment", getIntent().getExtras().getString("fragment"));
@@ -33,7 +46,6 @@ public class LoginActivity extends AppCompatActivity {
                                 startActivity(intent);
                             } else {
                                 Toast.makeText(getApplicationContext(), "Неправильно введена электронная почта или пароль", Toast.LENGTH_SHORT).show();
-
                             }
                         });
             }
@@ -41,6 +53,4 @@ public class LoginActivity extends AppCompatActivity {
 
         binding.goToRegisterActivityTv.setOnClickListener(v -> startActivity(new Intent(LoginActivity.this, RegisterActivity.class)));
     }
-
-
 }

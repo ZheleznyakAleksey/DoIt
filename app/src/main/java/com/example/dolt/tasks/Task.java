@@ -1,16 +1,15 @@
 package com.example.dolt.tasks;
 
 public class Task implements Comparable<Task>{
-    private String taskText, taskId, userFrom, userFromId, userTo, userToId, toOrFrom, termDateTime;
-    private int degreeOfImportance, taskStatus, isTaskCheck;
+    private String taskText, taskId, userFromId, userToId, toOrFrom, termDateTime;
+    private int degreeOfImportance, taskStatus, isTaskCheck, id;
     private boolean checked;
 
-    public Task(String taskText, String taskId, String userFrom, String userFromId, String userTo, String userToId, String toOrFrom, int taskStatus, int degreeOfImportance, String termDateTime, int isTaskCheck) {
+    public Task(int id, String taskText, String taskId, String userFromId, String userToId, String toOrFrom, int taskStatus, int degreeOfImportance, String termDateTime, int isTaskCheck) {
+        this.id = id;
         this.taskText = taskText;
         this.taskId = taskId;
-        this.userFrom = userFrom;
         this.userFromId = userFromId;
-        this.userTo = userTo;
         this.userToId = userToId;
         this.toOrFrom = toOrFrom;
         this.taskStatus = taskStatus;
@@ -18,6 +17,18 @@ public class Task implements Comparable<Task>{
         this.termDateTime = termDateTime;
         this.isTaskCheck = isTaskCheck;
         this.checked = taskStatus == 4;
+    }
+
+    public Task() {
+
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTaskId() {
@@ -44,28 +55,12 @@ public class Task implements Comparable<Task>{
         this.taskText = taskText;
     }
 
-    public String getUserFrom() {
-        return userFrom;
-    }
-
-    public void setUserFrom(String userFrom) {
-        this.userFrom = userFrom;
-    }
-
     public String getUserFromId() {
         return userFromId;
     }
 
     public void setUserFromId(String userFromId) {
         this.userFromId = userFromId;
-    }
-
-    public String getUserTo() {
-        return userTo;
-    }
-
-    public void setUserTo(String userTo) {
-        this.userTo = userTo;
     }
 
     public String getUserToId() {

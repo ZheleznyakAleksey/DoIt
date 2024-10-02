@@ -1,5 +1,7 @@
 package com.example.dolt.bottomnav.profile;
 
+import static com.example.dolt.DifferentMethods.makeToast;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -21,10 +23,10 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.dolt.LoginActivity;
-import com.example.dolt.MainActivity;
 import com.example.dolt.databinding.FragmentProfileBinding;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.example.dolt.users.User;
+import com.example.dolt.utils.DatabaseFriends;
+import com.example.dolt.utils.DatabaseTasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -41,11 +43,16 @@ import java.util.Objects;
 public class ProfileFragment extends Fragment {
     private FragmentProfileBinding binding;
     private Uri filePath;
+    DatabaseFriends databaseFriends;
+    DatabaseTasks databaseTasks;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentProfileBinding.inflate(inflater, container, false);
+
+        databaseFriends = new DatabaseFriends(this.getContext());
+        databaseTasks = new DatabaseTasks(this.getContext());
 
         loadUserInfo();
 
@@ -53,18 +60,20 @@ public class ProfileFragment extends Fragment {
         binding.updateUsernameButton.setOnClickListener(v -> updateUsername());
 
         binding.logoutBtn.setOnClickListener(v -> {
-            FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    if (task.isSuccessful()) {
-                        FirebaseAuth.getInstance().signOut();
-                        Intent intent = new Intent(getContext(), LoginActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                    }
+            FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    databaseTasks.openDatabase();
+                    databaseFriends.openDatabase();
+                    databaseFriends.deleteAllFriends();
+                    databaseTasks.deleteAllTasks();
+                    databaseTasks.close();
+                    databaseFriends.close();
+                    FirebaseAuth.getInstance().signOut();
+                    Intent intent = new Intent(getContext(), LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                 }
             });
-
         });
 
         return binding.getRoot();
@@ -90,38 +99,46 @@ public class ProfileFragment extends Fragment {
                         }
 
                         uploadImage();
+                        databaseFriends = new DatabaseFriends(requireContext());
+                        databaseFriends.openDatabase();
+                        FirebaseDatabase.getInstance().getReference().child("Users").child(databaseFriends.getFriend(0).getUserId()).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                String profileImage = snapshot.child("profileImage").getValue(String.class);
+
+                                databaseFriends.updateFriend(0, databaseFriends.getFriend(0).getUsername(), profileImage);
+                                databaseFriends.close();
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {// Handle the error
+                                makeToast(requireContext(), "Ошибка получения изображения профиля: " + error.getMessage());
+                            }
+                        });
+
                     }
                 }
             }
     );
 
-    private void loadUserInfo(){
-        FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String username = snapshot.child("username").getValue().toString();
-                        String profileImage = snapshot.child("profileImage").getValue().toString();
+    private void loadUserInfo() {
+        databaseFriends = new DatabaseFriends(this.getContext());
+        databaseFriends.openDatabase();
+        User user = databaseFriends.getFriend(0); // Assuming you store the current user as the first friend
+        databaseFriends.close();
 
-                        binding.usernameEt.setText(username);
-
-                        if (!profileImage.isEmpty()){
-                            Glide.with(getContext()).load(profileImage).into(binding.profileImageView);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
+        binding.usernameEt.setText(user.getUsername());
+        if (!user.getUserImage().equals("null")) {
+            Glide.with(getContext()).load(user.getUserImage()).into(binding.profileImageView);
+        }
     }
 
     private void selectImage(){
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        pickImageActivityResultLauncher.launch(intent);
+        if(pickImageActivityResultLauncher !=null)
+            pickImageActivityResultLauncher.launch(intent);
     }
 
     private void uploadImage(){
@@ -163,15 +180,17 @@ public class ProfileFragment extends Fragment {
                 }
 
                 if (newusername.length() > 20)
-                    MainActivity.makeToast(getContext(), "Имя пользователя не может быть длинее 20 символов");
+                    makeToast(getContext(), "Имя пользователя не может быть длинее 20 символов");
                 else if (alreadyThereIs) {
-                    MainActivity.makeToast(getContext(), "Данное имя пользователя уже занято");
+                    makeToast(getContext(), "Данное имя пользователя уже занято");
                 } else {
                     HashMap<String, Object> newUsername = new HashMap<>();
                     newUsername.put("username", newusername);
                     FirebaseDatabase.getInstance().getReference().child("Users").child(Objects.requireNonNull(FirebaseAuth.getInstance().getUid())).updateChildren(newUsername);
+                    databaseFriends = new DatabaseFriends(requireContext());
+                    databaseFriends.openDatabase();
+                    databaseFriends.updateFriend(0, newusername, databaseFriends.getFriend(0).getUserImage());
                 }
-
             }
 
             @Override
@@ -179,7 +198,5 @@ public class ProfileFragment extends Fragment {
 
             }
         });
-
-
     }
 }

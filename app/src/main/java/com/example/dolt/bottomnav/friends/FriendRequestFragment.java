@@ -62,13 +62,16 @@ public class FriendRequestFragment extends Fragment {
                     DataSnapshot userSnapshot = snapshot.child(friendRequestsId);
                     String username = Objects.requireNonNull(userSnapshot.child("username").getValue()).toString();
 
-                    User user = new User(username, friendRequestsId, false, true);
+                    User user = new User(username, friendRequestsId, "null", false, true);
                     users.add(user);
-
                 }
 
                 binding.friendRequestsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
                 binding.friendRequestsRecyclerView.setAdapter(new UsersAdapter(users));
+
+                if(users.isEmpty()){
+                    binding.textView10.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override

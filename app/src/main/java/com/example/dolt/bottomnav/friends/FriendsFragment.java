@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import com.example.dolt.AddNewFriends;
 import com.example.dolt.R;
 import com.example.dolt.databinding.FragmentFriendsBinding;
+import com.example.dolt.utils.DatabaseFriends;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,13 +21,29 @@ import java.util.Map;
 public class FriendsFragment extends Fragment {
     private FragmentFriendsBinding binding;
 
+    int startFragmentId;
+    Fragment startFragment;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (savedInstanceState == null) {
+            startFragmentId = R.id.myFriends;
+            startFragment = new MyFriendsFragment();
+        } else {
+            startFragmentId = savedInstanceState.getInt("startFragmentId");
+            if (startFragmentId==R.id.myFriends) {
+                startFragment = new MyFriendsFragment();
+            } else if (startFragmentId==R.id.friendRequests) {
+                startFragment = new FriendRequestFragment();
+            }
+        }
         binding = FragmentFriendsBinding.inflate(inflater, container, false);
 
-        getParentFragmentManager().beginTransaction().replace(binding.fragmentContainer2.getId(), new MyFriendsFragment()).commit();
-        binding.friendsNav.setSelectedItemId(R.id.myFriends);
+        getParentFragmentManager().beginTransaction().replace(binding.fragmentContainer2.getId(), startFragment).commit();
+        binding.friendsNav.setSelectedItemId(startFragmentId);
 
         Map<Integer, Fragment> fragmentMap = new HashMap<>();
         fragmentMap.put(R.id.myFriends, new MyFriendsFragment());
@@ -41,16 +58,19 @@ public class FriendsFragment extends Fragment {
             return true;
         });
 
-        binding.searchNewFriends.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final Intent i = new Intent(FriendsFragment.this.getContext(), AddNewFriends.class);
-                startActivity(i);
-            }
+        binding.searchNewFriends.setOnClickListener(v -> {
+            final Intent i = new Intent(FriendsFragment.this.getContext(), AddNewFriends.class);
+            startActivity(i);
         });
+
 
         return binding.getRoot();
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("startFragmentId", startFragmentId);
 
+    }
 }

@@ -44,10 +44,10 @@ public class AddNewFriends extends AppCompatActivity {
     public void loadUsers(){
         ArrayList<User> users = new ArrayList<>();
 
-        FirebaseDatabase.getInstance().getReference().addListenerForSingleValueEvent(new ValueEventListener() {
+        FirebaseDatabase.getInstance().getReference().child("Users").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String usersStr = Objects.requireNonNull(snapshot.child("Users").child("users").getValue()).toString();
+                String usersStr = Objects.requireNonNull(snapshot.child("users").getValue()).toString();
                 String[] usersIds = usersStr.split(",");
                 if (usersIds[0].length()<4) return;
                 for (int i = 0; i < usersIds.length; i++) {
@@ -60,7 +60,7 @@ public class AddNewFriends extends AppCompatActivity {
                     usersIds[i] = str;
                 }
 
-                String friendsStr = Objects.requireNonNull(snapshot.child("Users").child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).child("friends").getValue()).toString();
+                String friendsStr = Objects.requireNonNull(snapshot.child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).child("friends").getValue()).toString();
                 String[] friendsIds = friendsStr.split(",");
                 for (int i = 0; i < friendsIds.length; i++) {
                     String str = friendsIds[i];
@@ -79,18 +79,73 @@ public class AddNewFriends extends AppCompatActivity {
                             indexes.add(i);
                     }
                 }
+
                 Collections.reverse(indexes);
                 for (int index : indexes) {
                     usersIds = remove(usersIds, index);
-
                 }
+
+                if (snapshot.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("outFriendRequests").getValue()!=null) {
+                    String friendsRequestsStr = Objects.requireNonNull(snapshot.child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).child("outFriendRequests").getValue()).toString();
+                    String[] friendsRequestsIds = friendsRequestsStr.split(",");
+                    for (int i = 0; i < friendsRequestsIds.length; i++) {
+                        String str = friendsRequestsIds[i];
+                        str = str.substring(1, friendsRequestsIds[i].length() - 1);
+                        if (i == 0)
+                            str = str.substring(0, friendsRequestsIds[i].length() - 2);
+                        if (i == friendsRequestsIds.length - 1)
+                            str = str.substring(0, friendsRequestsIds[i].length() - 3);
+                        friendsRequestsIds[i] = str;
+                    }
+
+                    indexes = new ArrayList<>();
+                    for (int i = 0; i < usersIds.length; i++) {
+                        for (String friendsRequestId : friendsRequestsIds) {
+                            if (Objects.equals(usersIds[i], friendsRequestId))
+                                indexes.add(i);
+                        }
+                    }
+
+                    Collections.reverse(indexes);
+                    for (int index : indexes) {
+                        usersIds = remove(usersIds, index);
+                    }
+                }
+
+                if (snapshot.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("intoFriendRequests").getValue()!=null) {
+                    String friendsRequestsStr = Objects.requireNonNull(snapshot.child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).child("outFriendRequests").getValue()).toString();
+                    String[] friendsRequestsIds = friendsRequestsStr.split(",");
+                    for (int i = 0; i < friendsRequestsIds.length; i++) {
+                        String str = friendsRequestsIds[i];
+                        str = str.substring(1, friendsRequestsIds[i].length() - 1);
+                        if (i == 0)
+                            str = str.substring(0, friendsRequestsIds[i].length() - 2);
+                        if (i == friendsRequestsIds.length - 1)
+                            str = str.substring(0, friendsRequestsIds[i].length() - 3);
+                        friendsRequestsIds[i] = str;
+                    }
+
+                    indexes = new ArrayList<>();
+                    for (int i = 0; i < usersIds.length; i++) {
+                        for (String friendsRequestId : friendsRequestsIds) {
+                            if (Objects.equals(usersIds[i], friendsRequestId))
+                                indexes.add(i);
+                        }
+                    }
+
+                    Collections.reverse(indexes);
+                    for (int index : indexes) {
+                        usersIds = remove(usersIds, index);
+                    }
+                }
+
 
                 if (usersIds.length==0) return;
                 for (String userId : usersIds){
-                    DataSnapshot userSnapshot = snapshot.child("Users").child(userId);
+                    DataSnapshot userSnapshot = snapshot.child(userId);
                     String username = Objects.requireNonNull(userSnapshot.child("username").getValue()).toString();
 
-                    User user = new User(username, userId, false, false);
+                    User user = new User(username, userId, "null", false, false);
                     users.add(user);
                 }
 
@@ -117,7 +172,6 @@ public class AddNewFriends extends AppCompatActivity {
                 result[newIndex] = values[i];
             }
         }
-
         return result;
     }
 }

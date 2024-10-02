@@ -1,5 +1,7 @@
 package com.example.dolt;
 
+import static com.example.dolt.DifferentMethods.makeToast;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -56,7 +58,7 @@ public class RegisterActivity extends AppCompatActivity {
                     } else if (binding.usernameEt.getText().length() > 20) {
                         Toast.makeText(getApplicationContext(), "Имя пользователя не может быть длинее 20 символов", Toast.LENGTH_SHORT).show();
                     } else if (alreadyThereIs) {
-                        MainActivity.makeToast(getApplicationContext(), "Данное имя пользователя уже занято");
+                        makeToast(getApplicationContext(), "Данное имя пользователя уже занято");
                     } else{
                         FirebaseAuth.getInstance().createUserWithEmailAndPassword(binding.emailEt.getText().toString(), binding.passwordEt.getText().toString())
                                 .addOnCompleteListener(task -> {
@@ -72,7 +74,7 @@ public class RegisterActivity extends AppCompatActivity {
                                                 .child(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid()).setValue("");
                                         FirebaseDatabase.getInstance().getReference().child("Users").child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).setValue("");
 
-                                        startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                                        startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                                     }
                                     else {
                                         Toast.makeText(getApplicationContext(), "Пожалуйста, попробуйте ещё раз", Toast.LENGTH_SHORT).show();

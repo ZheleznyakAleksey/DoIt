@@ -33,6 +33,10 @@
     <string name="myTasks">Мои задачи</string>
     <string name="sentTasks">Отправленные задачи</string>
     <string name="incomingTasks">Присланные задачи</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
     <string-array name="degreeOfImportance">
         <item>Неважно</item>
         <item>Не очень важно</item>

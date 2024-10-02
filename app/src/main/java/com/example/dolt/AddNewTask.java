@@ -1,5 +1,6 @@
 package com.example.dolt;
 
+import static com.example.dolt.DifferentMethods.getCurrentUser;
 import static java.lang.String.valueOf;
 
 import android.annotation.SuppressLint;
@@ -19,13 +20,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.dolt.databinding.ActivityAddNewTaskBinding;
+import com.example.dolt.tasks.Task;
+import com.example.dolt.users.User;
+import com.example.dolt.utils.DatabaseFriends;
+import com.example.dolt.utils.DatabaseTasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Objects;
@@ -35,6 +40,8 @@ public class AddNewTask extends AppCompatActivity {
 
     private ActivityAddNewTaskBinding binding;
     private final String uid = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid();
+    private DatabaseTasks databaseTasks;
+    private DatabaseFriends databaseFriends;
     TextView tomorrowDateTime;
     Calendar dateAndTime=Calendar.getInstance();
 
@@ -45,41 +52,28 @@ public class AddNewTask extends AppCompatActivity {
         binding = ActivityAddNewTaskBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        databaseTasks = new DatabaseTasks(this);
+        databaseTasks.openDatabase();
+        databaseFriends = new DatabaseFriends(this);
+        databaseFriends.openDatabase();
+
         tomorrowDateTime = findViewById(R.id.termDateTime);
+        fullSpinner();
+
         setInitialDateTime();
-
         boolean isUpdate = false;
-        String fromFragment = "myTasksFragment";
         Bundle extras = getIntent().getExtras();
-        if (extras != null) {
-            isUpdate = extras.getBoolean("isUpdate");
-            fromFragment = extras.getString("fromFragment");
-        }
-        String finalFromFragment = fromFragment;
-
-        final String[] friendsStr = new String[1];
-        DatabaseReference dr = FirebaseDatabase.getInstance().getReference().child("Users");
-
-        fullSpinner(dr, friendsStr);
-
+        assert extras != null;
+        isUpdate = extras.getBoolean("isUpdate");
         if(isUpdate) {
-            binding.toUser.setVisibility(View.GONE);
             String taskId = extras.getString("taskId");
-            FirebaseDatabase.getInstance().getReference().child("Tasks").child(taskId)
-                            .addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    binding.newTaskText.setText(Objects.requireNonNull(snapshot.child("taskText").getValue()).toString());
-                                    binding.termDateTime.setText(Objects.requireNonNull(snapshot.child("termDateTime").getValue()).toString());
-                                    binding.degreeOfImportance.setSelection(Integer.parseInt(Objects.requireNonNull(snapshot.child("degreeOfImportance").getValue()).toString()));
-                                    binding.changeTaskCheck.setSelection(Integer.parseInt(Objects.requireNonNull(snapshot.child("isTaskCheck").getValue()).toString()));
-                                }
 
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
-
-                                }
-                            });
+            binding.toUser.setVisibility(View.GONE);
+            Task task = databaseTasks.getTaskByTaskId(taskId);
+            binding.newTaskText.setText(task.getTaskText());
+            binding.termDateTime.setText(task.getTermDateTime());
+            binding.degreeOfImportance.setSelection(task.getDegreeOfImportance());
+            binding.changeTaskCheck.setSelection(task.getIsTaskCheck());
         } else {
             binding.deleteTaskButton.setVisibility(View.GONE);
         }
@@ -87,26 +81,14 @@ public class AddNewTask extends AppCompatActivity {
         binding.userTo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                FirebaseDatabase.getInstance().getReference().child("Users").child(Objects.requireNonNull(FirebaseAuth.getInstance().getUid())).child("username")
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                if (binding.userTo.getItemAtPosition(position).toString().equals(Objects.requireNonNull(snapshot.getValue()) + " (Я)")) {
-                                    binding.isTaskCheckLinearLayout.setBackgroundColor(Color.GRAY);
-                                    binding.changeTaskCheck.setEnabled(false);
-                                    binding.changeTaskCheck.setSelection(0);
-                                } else {
-                                    binding.isTaskCheckLinearLayout.setBackgroundColor(Color.WHITE);
-                                    binding.changeTaskCheck.setEnabled(true);
-                                }
-
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-
-                            }
-                        });
+                if (binding.userTo.getItemAtPosition(position).toString().equals(getCurrentUser(getApplicationContext()).getUsername())) {
+                    binding.isTaskCheckLinearLayout.setBackgroundColor(Color.GRAY);
+                    binding.changeTaskCheck.setEnabled(false);
+                    binding.changeTaskCheck.setSelection(0);
+                } else {
+                    binding.isTaskCheckLinearLayout.setBackgroundColor(Color.WHITE);
+                    binding.changeTaskCheck.setEnabled(true);
+                }
             }
 
             @Override
@@ -121,30 +103,24 @@ public class AddNewTask extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (binding.newTaskText.getText().length()!=0) {
-                    int itemPosition = binding.userTo.getSelectedItemPosition();
+                    String userFromId = getCurrentUser(getApplicationContext()).getUserId();
+                    String userToId = getCurrentUser(getApplicationContext()).getUserId();
+                    String userTo = binding.userTo.getSelectedItem().toString();
+                    ArrayList<User> friends= databaseFriends.getAllFriends();
 
-                    String userToId = null;
-
-                    final String[][] allFriendsList = new String[2][friendsStr[0].split(",").length];
-                    allFriendsList[0] = friendsStr[0].split(",");
-
-                    for (int i = 0; i < allFriendsList[0].length; i++) {
-                        String str = allFriendsList[0][i];
-                        str = str.substring(1, allFriendsList[0][i].length() - 1);
-                        if (i == 0)
-                            str = str.substring(0, allFriendsList[0][i].length() - 2);
-                        if (i == allFriendsList[0].length - 1)
-                            str = str.substring(0, allFriendsList[0][i].length() - 3);
-                        if (i == itemPosition)
-                            userToId = str;
+                    for (int i = 0; i < friends.size(); i++) {
+                        if (Objects.equals(friends.get(i).getUsername(), userTo)) {
+                            userToId = friends.get(i).getUserId();
+                        }
                     }
 
                     HashMap<String, Object> taskInfo = new HashMap<>();
                     String taskId;
                     if (finalIsUpdate) {
                         taskId = extras.getString("taskId");
+
                         taskInfo.put("degreeOfImportance", binding.degreeOfImportance.getSelectedItemId());
-                        taskInfo.put("taskStatus", extras.getInt("taskStatus"));
+                        taskInfo.put("taskStatus", databaseTasks.getTaskByTaskId(taskId).getTaskStatus());
 
                     } else {
                         taskId = valueOf(UUID.randomUUID());
@@ -152,37 +128,50 @@ public class AddNewTask extends AppCompatActivity {
                         taskInfo.put("userToId", userToId);
                         taskInfo.put("degreeOfImportance", binding.degreeOfImportance.getSelectedItemId());
                     }
-                    String userFromId = valueOf(FirebaseDatabase.getInstance().getReference().child("Users").child(Objects.requireNonNull(FirebaseAuth.getInstance().getUid())));
-                    userFromId = userFromId.substring(userFromId.length() - 28);
+
                     taskInfo.put("userFromId", userFromId);
                     taskInfo.put("taskText", binding.newTaskText.getText().toString());
                     taskInfo.put("termDateTime", binding.termDateTime.getText());
                     taskInfo.put("isTaskCheck", binding.changeTaskCheck.getSelectedItemId());
                     if (!finalIsUpdate) {
-                        if (taskInfo.get("userToId").toString().equals(taskInfo.get("userFromId").toString())) {
-                            taskInfo.put("taskStatus", 1);
-                        }
+                        if (Objects.requireNonNull(taskInfo.get("userToId")).toString().equals(Objects.requireNonNull(taskInfo.get("userFromId")).toString())) {
+                                taskInfo.put("taskStatus", 1);
+                            }
                         else {
-                            taskInfo.put("taskStatus", 0);
-                        }
+                                taskInfo.put("taskStatus", 0);
+                            }
                     }
 
+                    Task task = new Task();
+                    task.setTaskText(binding.newTaskText.getText().toString());
+                    task.setDegreeOfImportance((int) binding.degreeOfImportance.getSelectedItemId());
+                    task.setTermDateTime((String) binding.termDateTime.getText());
+                    task.setIsTaskCheck((int) binding.changeTaskCheck.getSelectedItemId());
+                    task.setToOrFrom("От: ");
+                    task.setTaskId(taskId);
+                    if (!finalIsUpdate) {
+                        task.setUserFromId(userFromId);
+                        task.setUserToId(userToId);
+                        assert userToId != null;
+                        if (userToId.equals(userFromId)) {
+                            task.setTaskStatus(1);
+                        } else task.setTaskStatus(0);
+                        databaseTasks.insertTask(task);
+                    } else {
+                        Task oldTask = databaseTasks.getTaskByTaskId(taskId);
+                        task.setUserFromId(oldTask.getUserFromId());
+                        task.setUserToId(oldTask.getUserToId());
+                        task.setTaskStatus(oldTask.getTaskStatus());
+                        databaseTasks.updateTask(databaseTasks.getTaskByTaskId(taskId).getId(), task);
+                    }
+                    databaseTasks.close();
+                    databaseFriends.close();
+
                     FirebaseDatabase.getInstance().getReference().child("Tasks").child(taskId).updateChildren(taskInfo);
-                    FirebaseDatabase.getInstance().getReference().child("Users")
-                            .addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    final Intent intent = new Intent(AddNewTask.this, MainActivity.class);
-                                    intent.putExtra("fragment", "tasksFragment");
-                                    intent.putExtra("fragmentTasks", finalFromFragment);
-                                    startActivity(intent);
-                                }
 
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError error) {
-
-                                }
-                            });
+                    final Intent intent = new Intent(AddNewTask.this, MainActivity.class);
+                    intent.putExtra("fragment", "tasksFragment");
+                    startActivity(intent);
                 } else
                     Toast.makeText(getApplicationContext(), "Задача не может быть пустой!", Toast.LENGTH_SHORT).show();
             }
@@ -195,10 +184,13 @@ public class AddNewTask extends AppCompatActivity {
 
                 snapshot.child("Tasks").child("tasks").child(taskId).getRef().setValue(null);
                 snapshot.child("Tasks").child(taskId).getRef().removeValue();
+                databaseTasks.deleteTask(databaseTasks.getTaskByTaskId(taskId).getId());
+
+                databaseTasks.close();
+                databaseFriends.close();
 
                 Intent intent = new Intent(AddNewTask.this, MainActivity.class);
                 intent.putExtra("fragment", "tasksFragment");
-                intent.putExtra("fragmentTasks", finalFromFragment);
                 startActivity(intent);
             }
 
@@ -207,47 +199,24 @@ public class AddNewTask extends AppCompatActivity {
 
             }
         }));
-
     }
 
-    public void fullSpinner(DatabaseReference dr, String[] friendsStr){
+    public void fullSpinner(){
+        ArrayList<User> friends= databaseFriends.getAllFriends();
+        ArrayList<String> friendsNames = new ArrayList<>();
 
-        dr.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                friendsStr[0] = Objects.requireNonNull(snapshot.child(uid).child("friends").getValue()).toString();
-                String friendsStr = Objects.requireNonNull(snapshot.child(uid).child("friends").getValue()).toString();
-                final String[][] allFriendsList = new String[2][friendsStr.split(",").length];
-                allFriendsList[0] = friendsStr.split(",");
-                int selPos = 0;
-
-                for (int i = 0; i < allFriendsList[0].length; i++) {
-                    String str = allFriendsList[0][i];
-                    str = str.substring(1, allFriendsList[0][i].length()-1);
-                    if(i==0)
-                        str = str.substring(0, allFriendsList[0][i].length()-2);
-                    if (i== allFriendsList[0].length-1)
-                        str = str.substring(0, allFriendsList[0][i].length()-3);
-                    String username = Objects.requireNonNull(snapshot.child(str).child("username").getValue()).toString();
-                    allFriendsList[0][i] = username;
-                    allFriendsList[1][i] = str;
-                    if (str.equals(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getUid())) {
-                        selPos = i;
-                        allFriendsList[0][i] += " (Я)";
-                    }
-                }
-
-                ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, allFriendsList[0]);
-                spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                binding.userTo.setAdapter(spinnerArrayAdapter);
-                binding.userTo.setSelection(selPos);
+        int selPos = 0;
+        for (int i = 0; i < friends.size(); i++) {
+            friendsNames.add(friends.get(i).getUsername());
+            if (friends.get(i).getUserId().equals(getCurrentUser(getApplicationContext()).getUserId())) {
+                selPos = i;
             }
+        }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_dropdown_item, friendsNames);
+        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.userTo.setAdapter(spinnerArrayAdapter);
+        binding.userTo.setSelection(selPos);
     }
 
     // отображаем диалоговое окно для выбора даты
